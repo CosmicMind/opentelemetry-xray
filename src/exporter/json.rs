@@ -511,11 +511,22 @@ impl JsonExporter {
             return Err(ExportError::Timeout(timeout_duration));
         }
 
-        let stdout = io::stdout();
-        let mut lock = stdout.lock();
         for segment in segments {
-            serde_json::to_writer(&mut lock, &segment)?;
-            writeln!(lock)?;
+            #[cfg(test)]
+            {
+                // In test mode, write to a null sink to avoid polluting stdout
+                let mut sink = std::io::sink();
+                serde_json::to_writer(&mut sink, &segment)?;
+                writeln!(sink)?;
+            }
+            #[cfg(not(test))]
+            {
+                // Production: write to stdout as before
+                let stdout = std::io::stdout();
+                let mut lock = stdout.lock();
+                serde_json::to_writer(&mut lock, &segment)?;
+                writeln!(lock)?;
+            }
         }
         Ok(())
     }

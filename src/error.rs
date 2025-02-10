@@ -1,3 +1,5 @@
+/* Copyright © 2025, CosmicMind, Inc. */
+
 use thiserror::Error;
 
 /// TelemetryError encapsulates errors encountered during telemetry initialization

@@ -1,3 +1,5 @@
+/* Copyright © 2025, CosmicMind, Inc. */
+
 //! opentelemetry-xray provides a flexible interface for AWS X‑Ray distributed tracing using OpenTelemetry.
 
 pub mod error;
