@@ -8,7 +8,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use futures_util::Future;
 use opentelemetry::trace::{SpanContext, SpanId, Status, TraceError, TraceId};
-use opentelemetry_sdk::export::trace::{ExportResult, SpanData, SpanExporter};
+use opentelemetry_sdk::error::{OTelSdkError, OTelSdkResult};
+use opentelemetry_sdk::trace::{SpanData, SpanExporter};
 use rand_core::{OsRng, TryRngCore};
 use serde::ser::Error;
 use serde_json::{json, Error as JsonError, Map, Value};
@@ -34,6 +35,12 @@ pub enum ExportError {
 impl From<ExportError> for TraceError {
     fn from(err: ExportError) -> Self {
         TraceError::Other(Box::new(err))
+    }
+}
+
+impl From<ExportError> for OTelSdkError {
+    fn from(err: ExportError) -> Self {
+        OTelSdkError::InternalFailure(err.to_string())
     }
 }
 
@@ -536,14 +543,15 @@ impl SpanExporter for JsonExporter {
     fn export(
         &mut self,
         batch: Vec<SpanData>,
-    ) -> Pin<Box<dyn Future<Output = ExportResult> + Send + 'static>> {
+    ) -> Pin<Box<dyn Future<Output = OTelSdkResult> + Send + 'static>> {
         match self.export_batch(batch) {
             Ok(_) => Box::pin(async { Ok(()) }),
             Err(e) => Box::pin(async move { Err(e.into()) }),
         }
     }
 
-    fn shutdown(&mut self) {
+    fn shutdown(&mut self) -> OTelSdkResult {
         self.is_shutdown.store(true, Ordering::SeqCst);
+        Ok(())
     }
 }

@@ -6,8 +6,7 @@ mod tests {
     use crate::exporter::{generate_span_id, generate_trace_id};
     use opentelemetry::trace::{SpanContext, SpanId, Status, TraceFlags, TraceState};
     use opentelemetry::InstrumentationScope;
-    use opentelemetry_sdk::export::trace::SpanData;
-    use opentelemetry_sdk::trace::{SpanEvents, SpanLinks};
+    use opentelemetry_sdk::trace::{SpanData, SpanEvents, SpanLinks};
     use std::time::SystemTime;
 
     fn create_test_span() -> SpanData {

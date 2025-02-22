@@ -3,7 +3,7 @@
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry::{global, KeyValue};
 use opentelemetry_aws::trace::{XrayIdGenerator, XrayPropagator};
-use opentelemetry_sdk::trace::{self, TracerProvider};
+use opentelemetry_sdk::trace::{self, SdkTracerProvider};
 use opentelemetry_sdk::Resource;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
@@ -25,12 +25,12 @@ pub struct TelemetryConfig {
 
 #[derive(Debug)]
 pub struct Telemetry {
-    tracer_provider: TracerProvider,
+    tracer_provider: SdkTracerProvider,
 }
 
 impl Telemetry {
     /// Creates a new Telemetry instance with a tracer provider.
-    pub fn new(tracer_provider: TracerProvider) -> Self {
+    pub fn new(tracer_provider: SdkTracerProvider) -> Self {
         Self { tracer_provider }
     }
 
@@ -53,7 +53,7 @@ impl Telemetry {
 
     /// Initialize a tracer provider with the given configuration.
     /// All configuration checks are done here.
-    pub fn init_provider(config: &TelemetryConfig) -> Result<TracerProvider, TelemetryError> {
+    pub fn init_provider(config: &TelemetryConfig) -> Result<SdkTracerProvider, TelemetryError> {
         if config.service_name.is_empty() {
             return Err(TelemetryError::InvalidConfiguration(
                 "service_name cannot be empty".into(),
@@ -70,17 +70,17 @@ impl Telemetry {
             ));
         }
 
-        let resource = Resource::new(vec![
+        let resource = Resource::builder().with_attributes(vec![
             KeyValue::new("service.name", config.service_name.clone()),
             KeyValue::new("service.version", config.service_version.clone()),
             KeyValue::new("deployment.environment", config.deployment_env.clone()),
         ]);
 
-        let provider = TracerProvider::builder()
+        let provider = SdkTracerProvider::builder()
             .with_id_generator(XrayIdGenerator::default())
             .with_sampler(trace::Sampler::AlwaysOn)
             .with_simple_exporter(JsonExporter::new(config.deployment_env.clone()))
-            .with_resource(resource)
+            .with_resource(resource.build())
             .build();
 
         Ok(provider)
@@ -89,7 +89,7 @@ impl Telemetry {
     /// Initialize the global subscriber with the given configuration and tracer provider.
     pub fn init_subscriber(
         config: &TelemetryConfig,
-        provider: &TracerProvider,
+        provider: &SdkTracerProvider,
     ) -> Result<(), TelemetryError> {
         let tracer = provider.tracer(config.service_name.clone());
         let subscriber = Registry::default()
@@ -101,18 +101,18 @@ impl Telemetry {
     }
 
     /// Get a reference to the underlying tracer provider.
-    pub fn provider(&self) -> &TracerProvider {
+    pub fn provider(&self) -> &SdkTracerProvider {
         &self.tracer_provider
     }
 
     /// Shuts down the tracer provider, flushing any remaining spans.
     pub fn shutdown(&self) {
-        global::shutdown_tracer_provider();
+        let _ = self.tracer_provider.shutdown();
     }
 }
 
 impl Drop for Telemetry {
     fn drop(&mut self) {
-        global::shutdown_tracer_provider();
+        let _ = self.tracer_provider.shutdown();
     }
 }
