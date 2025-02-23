@@ -1,6 +1,7 @@
 /* Copyright © 2025, CosmicMind, Inc. */
 
 use std::borrow::Cow;
+use std::env;
 use std::io::{self, Write};
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -364,12 +365,12 @@ impl JsonExporter {
 
         // Optionally merge in generic AWS environment variables if not already provided.
         if !aws_attrs.contains_key("region") {
-            if let Ok(region) = std::env::var("AWS_REGION") {
+            if let Ok(region) = env::var("AWS_REGION") {
                 aws_attrs.insert("region".to_string(), json!(region));
             }
         }
         if !aws_attrs.contains_key("account_id") {
-            if let Ok(account_id) = std::env::var("AWS_ACCOUNT_ID") {
+            if let Ok(account_id) = env::var("AWS_ACCOUNT_ID") {
                 aws_attrs.insert("account_id".to_string(), json!(account_id));
             }
         }
