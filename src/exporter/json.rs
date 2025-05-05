@@ -274,7 +274,7 @@ impl JsonExporter {
         let mut annotations: Map<String, Value> = Map::new();
         let mut metadata = Map::from_iter([("environment".into(), json!(self.environment))]);
         let mut aws_attrs: Map<String, Value> = Map::new();
-        let mut exception: Option<Map<String, Value>> = None;
+        let mut exception: Map<String, Value> = Map::new();
 
         // Process span attributes.
         for kv in span_data.attributes.iter() {
@@ -308,58 +308,11 @@ impl JsonExporter {
                 // Collect AWS-specific attributes in a generic AWS block.
                 aws_attrs.insert(key.strip_prefix("aws.").unwrap().to_string(), json!(value));
             } else if key.starts_with("exception.") {
-                let val = value;
-                validate_value(&val, ValueType::Exception, &trace_id)?;
-                let exc = exception.get_or_insert_with(Map::new);
-                match key.strip_prefix("exception.").unwrap() {
-                    "id" => {
-                        exc.insert("id".into(), json!(val));
-                    }
-                    "message" => {
-                        exc.insert("message".into(), json!(val));
-                    }
-                    "type" => {
-                        exc.insert("type".into(), json!(val));
-                    }
-                    "remote" => {
-                        let remote_val = val.parse::<bool>().unwrap_or(false);
-                        exc.insert("remote".into(), json!(remote_val));
-                    }
-                    "truncated" => {
-                        let truncated_val = val.parse::<i64>().unwrap_or(0);
-                        exc.insert("truncated".into(), json!(truncated_val));
-                    }
-                    "skipped" => {
-                        let skipped_val = val.parse::<i64>().unwrap_or(0);
-                        exc.insert("skipped".into(), json!(skipped_val));
-                    }
-                    "cause" => {
-                        exc.insert("cause".into(), json!(val));
-                    }
-                    key if key.starts_with("stack.") => {
-                        let stack = exc.entry("stack").or_insert(json!([]));
-                        if let Value::Array(ref mut frames) = stack {
-                            let mut frame = Map::new();
-                            match key.strip_prefix("stack.").unwrap() {
-                                "path" => {
-                                    frame.insert("path".into(), json!(val));
-                                }
-                                "line" => {
-                                    let line_val = val.parse::<i64>().unwrap_or(0);
-                                    frame.insert("line".into(), json!(line_val));
-                                }
-                                "label" => {
-                                    frame.insert("label".into(), json!(val));
-                                }
-                                _ => {}
-                            };
-                            if !frame.is_empty() {
-                                frames.push(json!(frame));
-                            }
-                        }
-                    }
-                    _ => {}
-                }
+                // Collect AWS-specific attributes in a generic AWS block.
+                exception.insert(
+                    key.strip_prefix("exception.").unwrap().to_string(),
+                    json!(value),
+                );
             }
         }
 
@@ -451,6 +404,9 @@ impl JsonExporter {
             }
             if !aws_attrs.is_empty() {
                 segment_obj.insert("aws".to_string(), json!(aws_attrs));
+            }
+            if !exception.is_empty() {
+                segment_obj.insert("exception".to_string(), json!(exception));
             }
         }
 
