@@ -17,7 +17,7 @@ opentelemetry-xray is a Rust library that provides a flexible interface for AWS 
     - **Exceptions:** Detailed error information (with keys like `exception.type` and `exception.message`).
     - **HTTP Context:** Record HTTP request and response details (using keys such as `http.request.method` and `http.response.status`).
 
-> **Note:** In these examples we show keys as dot‑separated (e.g. `annotation.otel.kind`) without extra quotation marks. In your actual Rust code, if a field name isn’t a valid identifier (because it includes a period), you may need to use a string literal (for example, `"annotation.otel.kind" = "server"`)—the important part is that the exported key appears as `annotation.otel.kind` (and similarly for `http.request`, `http.response`, etc).
+> **Note:** In these examples we show keys as dot‑separated (e.g. `annotation.otel.kind`) without extra quotation marks. In your actual Rust code, if a field name isn't a valid identifier (because it includes a period), you may need to use a string literal (for example, `"annotation.otel.kind" = "server"`)—the important part is that the exported key appears as `annotation.otel.kind` (and similarly for `http.request`, `http.response`, etc).
 
 ## Installation
 
@@ -25,8 +25,8 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-opentelemetry-xray = "0.1.0"
-opentelemetry = { version = "0.27.1", features = ["trace"] }
+opentelemetry-xray = "0.1.5"
+opentelemetry = { version = "0.29.0", features = ["trace"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
 ```

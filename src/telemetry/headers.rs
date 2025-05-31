@@ -2,9 +2,9 @@
 
 use http::{HeaderMap, HeaderName, HeaderValue};
 use opentelemetry::{
+    context::Context,
     global,
     propagation::{Extractor, Injector},
-    Context,
 };
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 

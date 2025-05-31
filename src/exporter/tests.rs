@@ -34,7 +34,7 @@ mod tests {
 
     #[test]
     fn test_basic_export() {
-        let mut exporter = JsonExporter::new("test".to_string());
+        let exporter = JsonExporter::new("test".to_string());
         let span = create_test_span();
         let result = exporter.export_batch(vec![span]);
         assert!(result.is_ok());

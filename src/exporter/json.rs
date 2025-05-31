@@ -3,12 +3,10 @@
 use std::borrow::Cow;
 use std::env;
 use std::io::{self, Write};
-use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use futures_util::Future;
-use opentelemetry::trace::{SpanContext, SpanId, Status, TraceError, TraceId};
+use opentelemetry::trace::{SpanContext, SpanId, Status, TraceId};
 use opentelemetry_sdk::error::{OTelSdkError, OTelSdkResult};
 use opentelemetry_sdk::trace::{SpanData, SpanExporter};
 use rand_core::{OsRng, TryRngCore};
@@ -31,12 +29,6 @@ pub enum ExportError {
     Io(#[from] io::Error),
     #[error("Export failed: {message}, trace id: {trace_id}")]
     ExportFailed { message: String, trace_id: String },
-}
-
-impl From<ExportError> for TraceError {
-    fn from(err: ExportError) -> Self {
-        TraceError::Other(Box::new(err))
-    }
 }
 
 impl From<ExportError> for OTelSdkError {
@@ -308,7 +300,8 @@ impl JsonExporter {
                 // Collect AWS-specific attributes in a generic AWS block.
                 aws_attrs.insert(key.strip_prefix("aws.").unwrap().to_string(), json!(value));
             } else if key.starts_with("exception.") {
-                // Collect AWS-specific attributes in a generic AWS block.
+                // Validate exception values before adding them
+                validate_value(&value, ValueType::Exception, &trace_id)?;
                 exception.insert(
                     key.strip_prefix("exception.").unwrap().to_string(),
                     json!(value),
@@ -414,7 +407,7 @@ impl JsonExporter {
     }
 
     /// Synchronously exports a batch of spans as JSON segments.
-    pub fn export_batch(&mut self, batch: Vec<SpanData>) -> Result<(), ExportError> {
+    pub fn export_batch(&self, batch: Vec<SpanData>) -> Result<(), ExportError> {
         if self.is_shutdown.load(Ordering::SeqCst) {
             return Err(ExportError::Shutdown);
         }
@@ -497,13 +490,10 @@ impl JsonExporter {
 }
 
 impl SpanExporter for JsonExporter {
-    fn export(
-        &mut self,
-        batch: Vec<SpanData>,
-    ) -> Pin<Box<dyn Future<Output = OTelSdkResult> + Send + 'static>> {
+    async fn export(&self, batch: Vec<SpanData>) -> OTelSdkResult {
         match self.export_batch(batch) {
-            Ok(_) => Box::pin(async { Ok(()) }),
-            Err(e) => Box::pin(async move { Err(e.into()) }),
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.into()),
         }
     }
 
