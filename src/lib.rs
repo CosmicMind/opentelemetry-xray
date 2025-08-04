@@ -9,6 +9,6 @@ pub mod telemetry;
 // Re-export key types for users.
 pub use error::TelemetryError;
 pub use exporter::JsonExporter;
-pub use telemetry::{
+pub use telemetry_crate{
     extract_headers, inject_headers, HeaderExtractor, HeaderInjector, Telemetry, TelemetryConfig,
 };
