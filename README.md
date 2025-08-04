@@ -63,11 +63,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     
     async {
-        if let Err(e) = do_something().await {
+        if let Err(err) = do_something().await {
             // Record exception details:
             error!(
                 exception.type = "OperationError",
-                exception.message = %e,
+                exception.message = %err,
                 "Operation failed"
             );
         }

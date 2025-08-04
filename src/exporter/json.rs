@@ -198,10 +198,10 @@ fn validate_value(value: &str, value_type: ValueType, trace_id: &str) -> Result<
     }
 
     // Ensure the value can be correctly encoded as a JSON string.
-    if let Err(e) = serde_json::to_string(value) {
+    if let Err(err) = serde_json::to_string(value) {
         return Err(ExportError::Serialization(JsonError::custom(format!(
             "Invalid JSON string in {:?} value: {} (trace_id: {})",
-            value_type, e, trace_id
+            value_type, err, trace_id
         ))));
     }
 
@@ -222,7 +222,7 @@ pub fn generate_span_id() -> SpanId {
     SpanId::from_bytes(random_bytes)
 }
 
-/// The main exporter struct for AWS X‑Ray JSON output.
+/// The main exporter pub struct for AWS X‑Ray JSON output.
 ///
 /// This exporter converts spans into JSON segments using the AWS X‑Ray data format.
 #[derive(Debug)]
@@ -421,12 +421,12 @@ impl JsonExporter {
                 return Err(ExportError::Timeout(timeout_duration));
             }
             let trace_id = Self::format_xray_trace_id(span_data.span_context.trace_id());
-            let segment =
-                self.create_segment(span_data.clone())
-                    .map_err(|e| ExportError::ExportFailed {
-                        message: format!("Failed to create segment: {}", e),
-                        trace_id: trace_id.clone(),
-                    })?;
+            let segment = self.create_segment(span_data.clone()).map_err(|err| {
+                ExportError::ExportFailed {
+                    message: format!("Failed to create segment: {}", err),
+                    trace_id: trace_id.clone(),
+                }
+            })?;
             segments.push(segment);
 
             for event in span_data.events {
@@ -456,8 +456,8 @@ impl JsonExporter {
 
                 let event_segment =
                     self.create_segment(event_span)
-                        .map_err(|e| ExportError::ExportFailed {
-                            message: format!("Failed to create event segment: {}", e),
+                        .map_err(|err| ExportError::ExportFailed {
+                            message: format!("Failed to create event segment: {}", err),
                             trace_id: trace_id.clone(),
                         })?;
                 segments.push(event_segment);
@@ -493,7 +493,7 @@ impl SpanExporter for JsonExporter {
     async fn export(&self, batch: Vec<SpanData>) -> OTelSdkResult {
         match self.export_batch(batch) {
             Ok(_) => Ok(()),
-            Err(e) => Err(e.into()),
+            Err(err) => Err(err.into()),
         }
     }
 

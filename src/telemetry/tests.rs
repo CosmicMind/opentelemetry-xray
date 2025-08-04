@@ -107,8 +107,8 @@ mod tests {
 
         let result = Telemetry::init_provider(&config);
         assert!(result.is_err());
-        if let Err(e) = result {
-            assert!(matches!(e, TelemetryError::InvalidConfiguration(_)));
+        if let Err(err) = result {
+            assert!(matches!(err, TelemetryError::InvalidConfiguration(_)));
         }
     }
 

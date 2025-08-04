@@ -97,7 +97,7 @@ impl Telemetry {
             .with(EnvFilter::new(&config.log_level));
 
         tracing::subscriber::set_global_default(subscriber)
-            .map_err(|e| TelemetryError::SubscriberError(e.to_string()))
+            .map_err(|err| TelemetryError::SubscriberError(err.to_string()))
     }
 
     /// Get a reference to the underlying tracer provider.
