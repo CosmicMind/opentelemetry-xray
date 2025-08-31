@@ -231,7 +231,7 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 Contributions are welcome! Please open an issue or submit a pull request with your improvements or bug fixes.
 
-## Related Projects
+## Related Podcasts
 
 - [OpenTelemetry Rust](https://github.com/open-telemetry/opentelemetry-rust)
 - [AWS X-Ray](https://aws.amazon.com/xray/)
