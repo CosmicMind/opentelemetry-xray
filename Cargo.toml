@@ -11,7 +11,7 @@ opentelemetry = { version = "0.29.0", features = ["trace"] }
 opentelemetry-aws = "0.17.0"
 opentelemetry_sdk = { version = "0.29.0", features = ["rt-tokio"] }
 tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = [
+tracing-subscriber = { version = "0.3.20", features = [
     "env-filter",
     "json",
     "time",
